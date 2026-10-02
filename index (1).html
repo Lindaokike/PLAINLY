@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plainly - write it like you</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#fdfaff;--card:#fff;--ink:#1b1535;--mute:#6a6389;--line:#e9e3f7;--v:#7c3aed;--p:#ec4899;--a:#f59e0b;--t:#14b8a6;--grad:linear-gradient(120deg,#7c3aed,#ec4899 55%,#f59e0b)}
+[data-theme=dark]{--bg:#0f0b22;--card:#1a1536;--ink:#f5f2ff;--mute:#a9a2cc;--line:#32295a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Bricolage Grotesque',system-ui,sans-serif;line-height:1.55;min-height:100vh;overflow-x:hidden}
+.blob{position:fixed;z-index:-1;border-radius:50%;filter:blur(70px);opacity:.42;animation:fl 18s ease-in-out infinite alternate}
+.b1{width:420px;height:420px;background:#7c3aed;top:-120px;left:-110px}
+.b2{width:380px;height:380px;background:#ec4899;top:12%;right:-130px;animation-delay:-6s}
+.b3{width:360px;height:360px;background:#14b8a6;bottom:-150px;left:30%;animation-delay:-12s}
+[data-theme=dark] .blob{opacity:.25}
+@keyframes fl{to{transform:translate(40px,30px) scale(1.12)}}
+@media(prefers-reduced-motion:reduce){.blob,.spin{animation:none}}
+.hide{display:none!important}
+header{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:12px 20px;flex-wrap:wrap;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:color-mix(in srgb,var(--bg) 72%,transparent);border-bottom:1px solid var(--line)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.6rem;letter-spacing:-.02em;margin-right:auto}
+.logo::before{content:"";width:30px;height:30px;border-radius:10px;background:var(--grad);box-shadow:0 6px 18px #ec489966}
+nav{display:flex;gap:6px}
+nav button,.icon{background:transparent;border:1px solid transparent;color:var(--ink);font:inherit;padding:8px 15px;border-radius:999px;cursor:pointer}
+nav button.on{background:var(--grad);color:#fff;box-shadow:0 6px 16px #7c3aed44}
+nav button:hover:not(.on),.icon:hover{border-color:var(--v)}
+.icon{border-color:var(--line)}
+main{max-width:1040px;margin:0 auto;padding:10px 20px 70px}
+h1{font-size:clamp(2.1rem,6.5vw,3.3rem);line-height:1.04;margin:16px 0 12px;font-weight:800;letter-spacing:-.025em}
+.hl{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--mute);margin:0 0 22px;font-size:1.08rem;max-width:34em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:26px;box-shadow:0 18px 50px #7c3aed1f;position:relative;overflow:hidden}
+.card::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;background:var(--grad)}
+textarea,input[type=email],input[type=password]{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:14px;padding:14px}
+textarea{min-height:210px;resize:vertical;font-size:1.03rem}
+textarea:focus,input:focus{outline:none;border-color:var(--v);box-shadow:0 0 0 4px #7c3aed26}
+button:focus-visible{outline:3px solid var(--t);outline-offset:2px}
+.row{display:flex;gap:12px;align-items:center;margin-top:16px;flex-wrap:wrap}
+.count{color:var(--mute);font-size:.9rem;margin-right:auto}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.chip{border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;padding:8px 15px;border-radius:999px;cursor:pointer;transition:.15s}
+.chip:hover{border-color:var(--p);transform:translateY(-1px)}
+.chip.on{background:var(--grad);color:#fff;border-color:transparent;box-shadow:0 6px 16px #ec489944}
+.go{background:var(--grad);color:#fff;border:0;font:inherit;font-weight:700;padding:13px 30px;border-radius:999px;cursor:pointer;box-shadow:0 10px 26px #7c3aed55;transition:.15s}
+.go:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 14px 30px #ec489966}
+.go:disabled{opacity:.6;cursor:wait}
+.ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink);font:inherit;padding:8px 16px;border-radius:999px;cursor:pointer}
+.ghost:hover{border-color:var(--v);color:var(--v)}
+.msg{margin-top:12px;color:var(--p);font-weight:600}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:24px}
+.col h3{margin:0 0 10px;display:flex;align-items:center;gap:8px;font-size:1.05rem}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--mute)}
+.new{border-color:var(--t);box-shadow:0 18px 50px #14b8a633}
+.new .dot{background:var(--t)}
+.txt{white-space:pre-wrap;min-height:120px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.badge{font-size:.82rem;padding:3px 10px;border-radius:999px;margin-left:auto}
+.ok{background:#14b8a626;color:#0e9f8e}.warn{background:#f59e0b2e;color:#b87900}
+[data-theme=dark] .warn{color:var(--a)}[data-theme=dark] .ok{color:var(--t)}
+.spin{display:inline-block;width:18px;height:18px;border:3px solid var(--line);border-top-color:var(--p);border-radius:50%;animation:s 1s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes s{to{transform:rotate(360deg)}}
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;padding:26px 0}
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+.pill{padding:6px 13px;border-radius:999px;font-size:.88rem;font-weight:600}
+.p1{background:#7c3aed22;color:var(--v)}.p2{background:#ec489922;color:var(--p)}.p3{background:#14b8a622;color:#0e9f8e}
+[data-theme=dark] .p1{color:#b79bff}
+.demo{display:grid;gap:10px}
+.bubble{padding:14px 16px;border-radius:18px;border:1px solid var(--line);background:var(--card)}
+.bubble small{display:block;color:var(--mute);font-weight:700;margin-bottom:3px}
+.before{margin-right:28px;opacity:.85}
+.after{margin-left:28px;border-color:var(--t);box-shadow:0 12px 32px #14b8a62e}
+.auth{width:100%;max-width:450px;justify-self:center}
+.auth h2{margin:4px 0 2px;font-size:1.6rem}
+.auth input{margin-bottom:10px}
+.tabs{display:flex;gap:8px;margin:14px 0}
+.tabs button{flex:1}
+.item{display:flex;gap:12px;align-items:center;padding:15px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.item:last-child{border:0}.item:hover .ip{color:var(--v)}
+.ip{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{font-size:.8rem;color:var(--mute)}
+.st-done{color:var(--t)}.st-failed{color:var(--p)}.st-pending,.st-processing{color:var(--a)}
+@media(max-width:860px){.hero{grid-template-columns:1fr;gap:26px}}
+@media(max-width:760px){.cols{grid-template-columns:1fr}nav{order:3;width:100%;overflow-x:auto}.go{width:100%}.count{width:100%}}
+</style>
+</head>
+<body>
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+
+<!-- ============ SETTINGS: paste your two values here ============ -->
+<script>
+const SUPABASE_URL = "https://ygypcitxjyotnahygbfa.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlneXBjaXR4anlvdG5haHlnYmZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3OTY3NzcsImV4cCI6MjEwNjM3Mjc3N30.RR3tJc7wFF-aU_vLGOBmC5eC3p3xZtnOr8RpcsgAgjg";
+</script>
+<!-- ================================================================ -->
+
+<header>
+  <div class="logo">Plainly</div>
+  <nav id="nav" class="hide">
+    <button data-v="rewrite" class="on">Rewrite</button>
+    <button data-v="history">History</button>
+    <button data-v="voice">My Voice</button>
+  </nav>
+  <button class="icon" id="theme" aria-label="Switch light or dark mode">Dark mode</button>
+  <button class="ghost hide" id="logout">Log out</button>
+</header>
+
+<main>
+  <!-- AUTH -->
+  <section id="v-auth" class="hide">
+    <div class="hero">
+      <div>
+        <h1>Your draft, in <span class="hl">your voice.</span></h1>
+        <p class="sub">Paste text from anywhere. Plainly rewrites it so it reads natural and personal, and keeps every fact exactly as it was.</p>
+        <div class="pills"><span class="pill p1">Keeps your meaning</span><span class="pill p2">6 writing styles</span><span class="pill p3">Light and dark mode</span></div>
+        <div class="demo">
+          <div class="bubble before"><small>Before</small>Utilizing automation can significantly enhance productivity across various workflows.</div>
+          <div class="bubble after"><small>After</small>Automating the repetitive parts of your work means you get more done, with less effort.</div>
+        </div>
+      </div>
+      <div class="auth card">
+        <h2>Welcome</h2>
+        <p class="sub" style="margin:0;font-size:.95rem">Log in or create a free account to start.</p>
+        <div class="tabs">
+          <button class="ghost" id="tab-in">Log in</button>
+          <button class="ghost" id="tab-up">Sign up</button>
+        </div>
+        <input id="email" type="email" placeholder="Email" autocomplete="email">
+        <input id="pass" type="password" placeholder="Password (6+ characters)" autocomplete="current-password">
+        <button class="go" id="auth-go" style="width:100%">Log in</button>
+        <div class="msg" id="auth-msg"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REWRITE -->
+  <section id="v-rewrite" class="hide">
+    <h1>Make it sound like a person wrote it.</h1>
+    <p class="sub">Paste your draft. Your meaning and facts stay the same.</p>
+    <div class="card">
+      <textarea id="input" placeholder="Paste your text here..."></textarea>
+      <div class="chips" id="chips"></div>
+      <div class="row">
+        <input type="hidden" id="style" value="conversational">
+        <span class="count" id="count">0 words</span>
+        <button class="go" id="go">Rewrite</button>
+      </div>
+      <div class="msg" id="msg"></div>
+    </div>
+    <div id="result" class="cols hide">
+      <div class="card col"><h3><span class="dot"></span>Original</h3><div class="txt" id="r-old"></div></div>
+      <div class="card col new"><h3><span class="dot"></span>Rewritten <span class="badge" id="badge"></span></h3>
+        <div class="txt" id="r-new"></div>
+        <div class="tools hide" id="tools">
+          <button class="ghost" id="copy">Copy</button>
+          <button class="ghost" id="regen">Regenerate</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HISTORY -->
+  <section id="v-history" class="hide">
+    <h1>Your rewrites</h1>
+    <p class="sub">Select one to open it again.</p>
+    <div class="card" id="list"></div>
+  </section>
+
+  <!-- MY VOICE -->
+  <section id="v-voice" class="hide">
+    <h1>My Voice</h1>
+    <div class="card"><p>Soon you'll be able to add samples of your own writing here, so rewrites sound like you. This page is coming in the next update.</p></div>
+  </section>
+</main>
+
+<script>
+let db = null, setupError = "";
+try{
+  if(typeof supabase === "undefined") throw new Error("Could not load the Supabase library. Check your internet connection and reload.");
+  if(SUPABASE_URL.startsWith("PASTE") || SUPABASE_ANON_KEY.startsWith("PASTE")) throw new Error("Add your Supabase Project URL and anon key at the top of this file, then reload.");
+  db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}catch(e){ setupError = e.message; }
+const $ = id => document.getElementById(id);
+let user = null, mode = "in", busy = false;
+
+/* ---------- theme ---------- */
+function setTheme(t){
+  document.documentElement.setAttribute("data-theme", t);
+  $("theme").textContent = t === "dark" ? "Light mode" : "Dark mode";
+  try{ localStorage.setItem("theme", t); }catch(e){}
+}
+let saved = null; try{ saved = localStorage.getItem("theme"); }catch(e){}
+setTheme(saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+$("theme").onclick = () => setTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+
+/* ---------- views ---------- */
+function show(v){
+  ["auth","rewrite","history","voice"].forEach(n => $("v-"+n).classList.toggle("hide", n !== v));
+  document.querySelectorAll("#nav button").forEach(b => b.classList.toggle("on", b.dataset.v === v));
+  if(v === "history") loadHistory();
+}
+document.querySelectorAll("#nav button").forEach(b => b.onclick = () => show(b.dataset.v));
+
+function setUser(u){
+  user = u;
+  $("nav").classList.toggle("hide", !u);
+  $("logout").classList.toggle("hide", !u);
+  show(u ? "rewrite" : "auth");
+}
+
+/* ---------- auth ---------- */
+function setMode(m){
+  mode = m;
+  $("auth-go").textContent = m === "in" ? "Log in" : "Create account";
+  $("tab-in").style.borderColor = m === "in" ? "var(--v)" : "";
+  $("tab-up").style.borderColor = m === "up" ? "var(--v)" : "";
+  $("auth-msg").textContent = "";
+}
+$("tab-in").onclick = () => setMode("in");
+$("tab-up").onclick = () => setMode("up");
+$("auth-go").onclick = async () => {
+  if(!db){ $("auth-msg").textContent = setupError; return; }
+  const email = $("email").value.trim(), password = $("pass").value;
+  if(!email || password.length < 6){ $("auth-msg").textContent = "Enter your email and a password of at least 6 characters."; return; }
+  $("auth-msg").textContent = "";
+  const res = mode === "in"
+    ? await db.auth.signInWithPassword({ email, password })
+    : await db.auth.signUp({ email, password });
+  if(res.error){ $("auth-msg").textContent = res.error.message; return; }
+  if(mode === "up" && !res.data.session){ $("auth-msg").textContent = "Account created. Check your email to confirm it, then log in."; setMode("in"); return; }
+  if(res.data.user) setUser(res.data.user);
+};
+$("logout").onclick = async () => { await db.auth.signOut(); setUser(null); };
+
+/* ---------- rewrite ---------- */
+const STYLES = [["conversational","Conversational"],["casual","Casual"],["professional","Professional"],["academic","Academic"],["west_african","Nigerian / West African"],["first_person","First-person"]];
+function setStyle(v){ $("style").value = v; document.querySelectorAll(".chip").forEach(c => c.classList.toggle("on", c.dataset.v === v)); }
+STYLES.forEach(([v,l]) => { const b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.dataset.v = v; b.textContent = l; b.onclick = () => setStyle(v); $("chips").append(b); });
+setStyle("conversational");
+const words = t => (t.trim().match(/\S+/g) || []).length;
+$("input").oninput = () => $("count").textContent = words($("input").value) + " words";
+
+function showResult(row){
+  $("result").classList.remove("hide");
+  $("r-old").textContent = row.original_text;
+  const done = row.status === "done";
+  $("r-new").textContent = done ? row.rewritten_text : (row.status === "failed" ? "Something went wrong while rewriting. Try again." : "");
+  $("tools").classList.toggle("hide", !done);
+  const b = $("badge");
+  b.className = "badge"; b.textContent = "";
+  if(done && row.qc_passed === true){ b.textContent = "Meaning checked"; b.classList.add("ok"); }
+  if(done && row.qc_passed === false){ b.textContent = "Review the facts"; b.classList.add("warn"); b.title = row.qc_notes || ""; }
+  $("result").scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+
+async function rewrite(text, style){
+  if(busy) return;
+  if(!text.trim()){ $("msg").textContent = "Paste some text first."; return; }
+  busy = true; $("go").disabled = true; $("msg").textContent = "";
+  $("result").classList.remove("hide");
+  $("r-old").textContent = text;
+  $("r-new").innerHTML = '<span class="spin"></span>Rewriting...';
+  $("tools").classList.add("hide"); $("badge").textContent = "";
+  const { data, error } = await db.from("rewrites")
+    .insert({ user_id: user.id, style, original_text: text }).select("id").single();
+  if(error){ $("msg").textContent = error.message; $("result").classList.add("hide"); busy = false; $("go").disabled = false; return; }
+  for(let i = 0; i < 45; i++){
+    await new Promise(r => setTimeout(r, 2000));
+    const { data: row } = await db.from("rewrites").select("*").eq("id", data.id).single();
+    if(row && (row.status === "done" || row.status === "failed")){ showResult(row); busy = false; $("go").disabled = false; return; }
+  }
+  $("r-new").textContent = "This is taking longer than usual. Check History in a minute.";
+  busy = false; $("go").disabled = false;
+}
+$("go").onclick = () => rewrite($("input").value, $("style").value);
+$("regen").onclick = () => rewrite($("input").value || $("r-old").textContent, $("style").value);
+$("copy").onclick = async () => {
+  try{ await navigator.clipboard.writeText($("r-new").textContent); $("copy").textContent = "Copied"; }
+  catch(e){ $("copy").textContent = "Select and copy manually"; }
+  setTimeout(() => $("copy").textContent = "Copy", 1800);
+};
+
+/* ---------- history ---------- */
+const labels = { conversational:"Conversational", casual:"Casual", professional:"Professional", academic:"Academic", west_african:"West African", first_person:"First-person", custom:"Custom" };
+async function loadHistory(){
+  const box = $("list"); box.textContent = "Loading...";
+  const { data, error } = await db.from("rewrites").select("*").order("created_at", { ascending:false }).limit(25);
+  if(error){ box.textContent = error.message; return; }
+  if(!data.length){ box.textContent = "Nothing here yet. Rewrite some text and it will show up here."; return; }
+  box.textContent = "";
+  data.forEach(row => {
+    const d = document.createElement("div"); d.className = "item";
+    const p = document.createElement("span"); p.className = "ip"; p.textContent = row.original_text;
+    const t = document.createElement("span"); t.className = "tag";
+    t.textContent = (labels[row.style] || row.style) + " - " + new Date(row.created_at).toLocaleDateString();
+    const s = document.createElement("span"); s.className = "tag st-" + row.status; s.textContent = row.status;
+    d.append(p, t, s);
+    d.onclick = () => { $("input").value = row.original_text; $("input").oninput(); setStyle(row.style); show("rewrite"); showResult(row); };
+    box.append(d);
+  });
+}
+
+/* ---------- start ---------- */
+setMode("in");
+if(db){ db.auth.getSession().then(({ data }) => setUser(data.session ? data.session.user : null)).catch(() => setUser(null)); }
+else { setUser(null); $("auth-msg").textContent = setupError; }
+</script>
+</body>
+</html>
