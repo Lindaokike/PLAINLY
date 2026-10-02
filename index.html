@@ -95,6 +95,7 @@ button:focus-visible{outline:3px solid var(--t);outline-offset:2px}
 .gbtn:hover{border-color:var(--v)}
 .or{display:flex;align-items:center;gap:10px;color:var(--mute);font-size:.9rem;margin:16px 0}
 .or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.msg.good{color:var(--t)}
 </style>
 </head>
 <body>
@@ -145,6 +146,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         <div class="pw hide" id="confirm-wrap"><input id="pass2" type="password" placeholder="Confirm password" autocomplete="new-password"><button type="button" class="eye" data-t="pass2" aria-label="Show password"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/><line class="slash" x1="3" y1="3" x2="21" y2="21"/></svg></button></div>
         <button class="go" id="auth-go" style="width:100%">Log in</button>
         <div class="msg" id="auth-msg"></div>
+        <button class="ghost hide" id="resend" type="button" style="margin-top:10px">Resend confirmation email</button>
       </div>
     </div>
   </section>
@@ -225,14 +227,21 @@ function setUser(u){
 }
 
 /* ---------- auth ---------- */
+function say(text, good){
+  $("auth-msg").textContent = text;
+  $("auth-msg").classList.toggle("good", !!good);
+  $("resend").classList.add("hide");
+}
 function setMode(m){
   mode = m;
   $("auth-go").textContent = m === "in" ? "Log in" : "Create account";
   $("tab-in").style.borderColor = m === "in" ? "var(--v)" : "";
   $("tab-up").style.borderColor = m === "up" ? "var(--v)" : "";
-  $("auth-msg").textContent = "";
+  say("");
   $("confirm-wrap").classList.toggle("hide", m === "in");
-  $("pass2").value = "";
+  $("pass").value = ""; $("pass2").value = "";
+  ["pass","pass2"].forEach(i => $(i).type = "password");
+  document.querySelectorAll(".eye").forEach(b => { b.classList.remove("shown"); b.setAttribute("aria-label","Show password"); });
   $("pass").autocomplete = m === "in" ? "current-password" : "new-password";
 }
 $("tab-in").onclick = () => setMode("in");
@@ -240,15 +249,31 @@ $("tab-up").onclick = () => setMode("up");
 $("auth-go").onclick = async () => {
   if(!db){ $("auth-msg").textContent = setupError; return; }
   const email = $("email").value.trim(), password = $("pass").value;
-  if(!email || password.length < 6){ $("auth-msg").textContent = "Enter your email and a password of at least 6 characters."; return; }
-  if(mode === "up" && password !== $("pass2").value){ $("auth-msg").textContent = "The two passwords do not match."; return; }
-  $("auth-msg").textContent = "";
+  if(!email || password.length < 6){ say("Enter your email and a password of at least 6 characters."); return; }
+  if(mode === "up" && password !== $("pass2").value){ say("The two passwords do not match."); return; }
+  say("");
   const res = mode === "in"
     ? await db.auth.signInWithPassword({ email, password })
-    : await db.auth.signUp({ email, password });
-  if(res.error){ $("auth-msg").textContent = res.error.message; return; }
-  if(mode === "up" && !res.data.session){ $("auth-msg").textContent = "Account created. Check your email to confirm it, then log in."; setMode("in"); return; }
+    : await db.auth.signUp({ email, password, options: { emailRedirectTo: location.origin + location.pathname } });
+  if(res.error){
+    if(/not confirmed/i.test(res.error.message)){
+      say("Your email isn't confirmed yet. Open your inbox (check spam too) and click the confirmation link, then log in.");
+      $("resend").classList.remove("hide");
+    } else { say(res.error.message); }
+    return;
+  }
+  if(mode === "up" && !res.data.session){
+    setMode("in");
+    say("Account created! We sent a confirmation link to " + email + ". Open your email (check spam too), click the link, then log in here.", true);
+    return;
+  }
   if(res.data.user) setUser(res.data.user);
+};
+$("resend").onclick = async () => {
+  const email = $("email").value.trim();
+  if(!email){ say("Type your email above first."); return; }
+  const { error } = await db.auth.resend({ type: "signup", email, options: { emailRedirectTo: location.origin + location.pathname } });
+  say(error ? error.message : "Sent again. Check your inbox and spam folder.", !error);
 };
 document.querySelectorAll(".eye").forEach(b => b.onclick = () => {
   const f = $(b.dataset.t), show = f.type === "password";
